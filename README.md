@@ -1,5 +1,7 @@
 # cascadeur MMD toolkit 1.0
 
+![cascadeur MMD toolkit 1.0 release cover](docs/images/01-cover.png)
+
 面向 Cascadeur 的 MMD 骨骼动画工具集，支持 VMD 导入、VMD 导出和生成 Rig 清理。
 
 An MMD skeletal animation toolkit for Cascadeur, with VMD import, VMD export and generated-rig cleanup.
@@ -41,6 +43,20 @@ Prepare the MMD model, skeleton and valid control bindings, then open a `.casc` 
 导入选区的起点对应 VMD 第0帧，不会变速拉伸。例：选中100–160帧，会导入源0–60帧。未选区时从目标0帧开始。导出将所选片段重新编号为0帧起，按30 fps约定处理。
 
 The import range starts at source VMD frame 0 without time stretching. Selecting target frames 100–160 imports source frames 0–60. With no selection, import starts at target frame 0. Export renumbers the selected clip from 0 and follows a 30 fps convention.
+
+## 界面预览 Interface previews
+
+模型选择与绑定信息 / Model selection and binding details
+
+![Model picker](docs/images/02-model-picker.png)
+
+人物FK/IK导出策略 / Character export strategy
+
+![FK and IK export strategies](docs/images/03-export-strategy.png)
+
+Scene Clean执行前确认 / Confirmation before removing generated rigs
+
+![Scene Clean confirmation](docs/images/04-scene-clean.png)
 
 ## 注意 Notes
 
