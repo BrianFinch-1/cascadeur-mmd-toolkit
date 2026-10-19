@@ -76,6 +76,6 @@ Contact the author with the toolkit version, Cascadeur version and reproduction 
 
 Logs and reports are under the directory above. Prefer the exact report identified by the error window.
 
-本仓库仅用于公开发布用户交付文件及文档，独立于开发仓库。运行依赖的第三方许可见 [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)。
+运行依赖的第三方许可见 [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)。
 
-This repository distributes user packages and documentation independently of the development repository. See the included third-party notices.
+See [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt) for third-party dependency notices.
