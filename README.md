@@ -6,6 +6,10 @@
 
 An MMD skeletal animation toolkit for Cascadeur, with VMD import, VMD export and generated-rig cleanup.
 
+**⚠️ 请先升级至 Cascadeur 2026.2 或更高版本。** 当前版本插件基于 Cascadeur 2026.2 及以上版本开发。低于此版本的软件（例如 **2026.1.3**）安装目录中缺少所需的 **PySide6** 组件，会导致安装脚本无法正常完成安装。请升级 Cascadeur 后再安装和使用插件。
+
+**⚠️ Upgrade to Cascadeur 2026.2 or later before installing.** This plugin version was developed for Cascadeur 2026.2 and later. Older versions, such as **2026.1.3**, lack the required **PySide6** component in their installation directory, preventing the installer from completing successfully. Upgrade Cascadeur before installing and using the toolkit.
+
 **[下载完整安装包 Download ZIP](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.0/cascadeur-MMD-toolkit-1.0.zip)** · **[中英使用教程 PDF User Guide](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.0/User-Guide.zh-en.pdf)** · [全部发布 Releases](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases)
 
 请下载上方安装包；GitHub 自动生成的 Source code 压缩包只包含此发布仓库的说明和文档，不是插件安装包。
