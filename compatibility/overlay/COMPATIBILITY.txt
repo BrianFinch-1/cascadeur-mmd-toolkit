@@ -1,0 +1,43 @@
+Cascadeur MMD toolkit 1.0 — 2026.1.3 compatibility revision 2
+
+安装方式保持不变：关闭 Cascadeur，完整解压 ZIP，双击 Install.cmd，输入
+直接包含 cascadeur.exe 的目录。安装器显示实际版本号及 legacy / native 宿主模式。
+先读取 cascadeur.exe 版本（至少 2026.1.3），2026.1.x 选择 legacy，
+2026.2.0 起选择 native，再核对接口能力；无法识别版本或混合脚本规则会被拒绝。
+需要恢复时，关闭 Cascadeur，运行 Restore.cmd 并输入安装时的备份目录。
+
+legacy：官网 Windows x64 Cascadeur 2026.1.3 / CPython 3.11 / Qt 6.5.3。
+提供官方 PySide6-Essentials 与 Shiboken6 6.5.3 的最小未修改子集，仅包含
+QtCore、QtNetwork、QtQml 绑定；另附 CPython 3.11 stable-ABI 转发 DLL。
+旧版 Qt 缺少完整 GUI 绑定所需的导出符号，因此不安装 QtGui/QtQuick 绑定。
+菜单通过宿主 QML 引擎直接连接 Python 回调，不依赖 2026.2 的脚本服务器，
+也不安装 D3D11 代理。Scene Clean 同时支持新旧命令注册名称。
+
+native：保留 2026.2+ 原有 PySide6、原生代理和脚本回调路径。修正了把
+Qt 内联 topLevelWindows 当作必须 DLL 导出的检查，保留实际 allWindows 导出检查。
+
+不替换 Cascadeur 的 Qt DLL、Qt 插件、QML 模块或 python311.dll。
+运行时文件参与原有 SHA256 校验、备份、写入失败回滚和恢复事务。
+旧版已存在但不匹配的 Python 绑定会在写入前被拒绝。
+r2 允许恢复后仅剩已知 CPython 3.11 缓存时再次安装，保留这些缓存；仍拒绝未知文件。
+构建排除开发缓存，包内全部文件大小与 SHA256 均重新生成并验证。
+修复脚本扫描早于 install() 时依赖尚未初始化的报错，以及辅助模块写死包名
+导致 scripts.vmd_bridge 命名空间导入失败的告警；不改变动作算法。
+本包仍为 Windows x64 安装包，不是 Linux 移植版。
+
+验证范围：官网 Windows 2026.1.3 在 Linux/Wine 的命令模式中加载绑定、
+读取 Cascy 示例场景、创建真实 QML 窗口并验证菜单/回调和窗口生命周期。
+命令模式测试创建独立菜单夹具，不代表完整交互界面的端到端测试。
+安装事务另在 Linux PowerShell 中验证，测试仅适配了 Windows 路径和
+PE 版本信息访问；没有完成原生 Windows PowerShell 5.1/UAC 的实机测试。
+尚无用户具体 PMX/VMD 工程的完整导入导出结果，建议先用工程副本试用。
+
+最初 2026.2.3 烟测的原生崩溃已定位到测试手动分发事件时释放 Python GIL，
+宿主脚本定时器重入 Python 时线程状态为空。在移走全部插件的宿主中同样复现；
+测试保留 GIL 后不再发生该原生崩溃。另修正测试复用失效窗口包装器的清理问题。
+这两项修改均位于测试，现代窗口实现仍从上游逐字节保留。
+详细证据见仓库 compatibility/INVESTIGATION.md 和 compatibility/VALIDATION.md。
+
+Source, reproducible build and tests: compatibility/ in the GitHub repository.
+Dependencies: DEPENDENCY-SOURCES.json, THIRD_PARTY_LICENSES.txt,
+LGPL-3.0.txt, GPL-3.0.txt and PYTHON-LICENSE.txt.
