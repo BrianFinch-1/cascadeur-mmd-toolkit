@@ -14,9 +14,14 @@ if ($PortableVersionFixture) {
     # manifest, PE export parser, profile selection and transactions are real.
     $versions=Get-Content -LiteralPath $PortableVersionFixture -Raw | ConvertFrom-Json
     & $module {
-        param($versions)
-        $script:TestVersions=$versions
+        param($versions, $modernRoot)
+        $script:TestVersions=$versions.legacy
+        $script:ModernTestVersions=$versions.modern
+        $script:ModernTestRoot=$modernRoot
         function script:Get-ToolkitHostVersion([string]$Path) {
+            if ($script:ModernTestRoot -and $Path.StartsWith($script:ModernTestRoot+'/',[StringComparison]::Ordinal)) {
+                return $script:ModernTestVersions.([IO.Path]::GetFileName($Path))
+            }
             return $script:TestVersions.([IO.Path]::GetFileName($Path))
         }
         function script:Get-ToolkitRoot([string]$Path) {
@@ -32,7 +37,7 @@ if ($PortableVersionFixture) {
             Assert-ToolkitNoReparse $full
             return $full
         }
-    } $versions
+    } $versions $ModernHostRoot
 }
 function Assert([bool]$Condition,[string]$Message) { if (!$Condition) { throw $Message } }
 function Expect-Failure([scriptblock]$Action,[string]$Pattern) {
@@ -92,6 +97,49 @@ try {
     Assert ($restored.status -eq 'restored') 'Restore failed'
     Assert ((Snapshot $root) -ceq $before) 'Restore did not return exact initial host tree'
     Write-Output 'PASS: changed-file restore refusal and exact restore of files/directories'
+
+    # A real Python process leaves these after restoring source/runtime files.
+    $caches=@(
+        'python/Lib/site-packages/PySide6/__pycache__/__init__.cpython-311.pyc',
+        'python/Lib/site-packages/PySide6/support/__pycache__/deprecated.cpython-311.opt-1.pyc',
+        'python/Lib/site-packages/shiboken6/__pycache__/__init__.cpython-311.pyc'
+    )
+    foreach ($relative in $caches) {
+        $cache=Join-Path $root $relative
+        [void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($cache))
+        [IO.File]::WriteAllBytes($cache,[byte[]](1,2,3,4))
+    }
+    $cacheBefore=Snapshot $root
+    $cachedPreview=Invoke-ToolkitInstall -ReleaseRoot $ReleaseRoot -CascadeurRoot $root -Preview
+    Assert ($cachedPreview.host_profile -ceq 'legacy') 'Cache-only package remnants block reinstall'
+    $cacheBackup=Join-Path $temporary 'backup-cache'
+    [void](Invoke-ToolkitInstall -ReleaseRoot $ReleaseRoot -CascadeurRoot $root -BackupDirectory $cacheBackup)
+    [void](Invoke-ToolkitRestore $cacheBackup)
+    Assert ((Snapshot $root) -ceq $cacheBefore) 'Restore modified pre-existing bytecode caches'
+    $unknownCache=Join-Path $root 'python/Lib/site-packages/PySide6/__pycache__/foreign.cpython-311.pyc'
+    [IO.File]::WriteAllBytes($unknownCache,[byte[]](1,2,3,4))
+    Expect-Failure {Invoke-ToolkitInstall -ReleaseRoot $ReleaseRoot -CascadeurRoot $root -Preview} 'bindings conflict'
+    Remove-Item -LiteralPath (Join-Path $root 'python/Lib/site-packages/PySide6') -Recurse -Force
+    Remove-Item -LiteralPath (Join-Path $root 'python/Lib/site-packages/shiboken6') -Recurse -Force
+    Write-Output 'PASS: known cache-only remnants reinstall, restore preserves them, unknown caches rejected'
+
+    if ($PortableVersionFixture) {
+        $originalVersion=& $module {$script:TestVersions.'cascadeur.exe'.FileVersion}
+        try {
+            & $module {$script:TestVersions.'cascadeur.exe'.FileVersion='2026.1.2.0.1'}
+            Expect-Failure {Invoke-ToolkitInstall -ReleaseRoot $ReleaseRoot -CascadeurRoot $root -Preview} '2026.1.3 or later'
+            & $module {$script:TestVersions.'cascadeur.exe'.FileVersion='2026.2.0.0.1'}
+            Expect-Failure {Invoke-ToolkitInstall -ReleaseRoot $ReleaseRoot -CascadeurRoot $root -Preview} 'Missing host capability'
+            & $module {$script:TestVersions.'cascadeur.exe'.FileVersion='unknown'}
+            Expect-Failure {Invoke-ToolkitInstall -ReleaseRoot $ReleaseRoot -CascadeurRoot $root -Preview} 'Cannot identify the Cascadeur release'
+        } finally { & $module {param($v) $script:TestVersions.'cascadeur.exe'.FileVersion=$v} $originalVersion }
+        $mixedRule=Join-Path $root 'resources/scripts/python/python_actions_rule.py'
+        [IO.File]::WriteAllText($mixedRule,'mixed host scripting rules')
+        Expect-Failure {Invoke-ToolkitInstall -ReleaseRoot $ReleaseRoot -CascadeurRoot $root -Preview} 'mixed scripting rules'
+        Remove-Item -LiteralPath $mixedRule
+        Assert ((Snapshot $root) -ceq $before) 'Version rejection modified host'
+        Write-Output 'PASS: unsupported/unidentifiable versions and mixed rules rejected; modern never falls back to legacy'
+    }
 
     $foreign=Join-Path $root 'python/Lib/site-packages/PySide6/__init__.py'
     [void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($foreign))

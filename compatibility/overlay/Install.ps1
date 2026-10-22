@@ -12,7 +12,7 @@ $exitCode=1
 $failure=$null
 try {
     Import-Module -Name (Join-Path $PSScriptRoot 'Installer.Core.psm1') -Force -DisableNameChecking
-    Write-Host 'cascadeur MMD toolkit 1.0' -ForegroundColor Cyan
+    Write-Host 'cascadeur MMD toolkit 1.0 compatibility r2' -ForegroundColor Cyan
     Write-Host '安装 / Install: 关闭此安装目录中的 Cascadeur 后继续。'
     Write-Host 'Close Cascadeur from the chosen installation before continuing.'
     if (!$CascadeurRoot) {
@@ -25,6 +25,7 @@ try {
         $root=Get-ToolkitRoot $CascadeurRoot
         # Validate the entire release and host capabilities before requesting elevation.
         $preview=Invoke-ToolkitInstall -ReleaseRoot $PSScriptRoot -CascadeurRoot $root -Preview
+        Write-Host ('Cascadeur: '+$preview.host_version)
         Write-Host ('宿主模式 / Host profile: '+$preview.host_profile)
         $writes=@($preview.entries | Where-Object {$_.action -eq 'write'}).Count
         $unchanged=@($preview.entries | Where-Object {$_.action -eq 'unchanged'}).Count

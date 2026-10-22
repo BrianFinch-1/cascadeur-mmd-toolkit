@@ -55,6 +55,39 @@ def fetch(cache):
     return result
 
 
+def patch_import_bootstrap(package):
+    # Host action discovery imports every helper before install() is called.
+    # Initialize vendored dependencies at package import, and keep helper
+    # imports relative under both scripts.vmd_bridge and vmd_bridge names.
+    init = package / "__init__.py"
+    source = init.read_text(encoding="utf-8-sig")
+    anchor = "from . import _logging"
+    if source.count(anchor) != 1:
+        raise ValueError("Unexpected upstream package import anchor")
+    source = source.replace(anchor, '''# Dependencies must also be available during host action discovery.
+_deps = str(Path(__file__).resolve().parent / "deps")
+if _deps not in sys.path:
+    sys.path.insert(0, _deps)
+
+from . import _logging''')
+    init.write_text(source, encoding="utf-8")
+    helper = package / "gen_controller_bake.py"
+    source = helper.read_text(encoding="utf-8-sig")
+    imports = [("from vmd_bridge.import_defaults import DEFAULTS", "from .import_defaults import DEFAULTS", ""),
+               ("from vmd_bridge import bone_alias", "from . import bone_alias", ""),
+               ("from vmd_bridge.rig_identity import mainpoint_bindings, resolve_point_bone",
+                "from .rig_identity import mainpoint_bindings, resolve_point_bone", "    "),
+               ("from vmd_bridge.twist_policy import inactive_twist_refs",
+                "from .twist_policy import inactive_twist_refs", "    ")]
+    for absolute, relative, indent in imports:
+        anchor = indent + absolute
+        if source.count(anchor) != 1:
+            raise ValueError("Unexpected upstream helper import: " + absolute)
+        source = source.replace(anchor, indent + "if __package__:\n" + indent + "    " + relative
+                                + "\n" + indent + "else:\n" + indent + "    " + absolute)
+    helper.write_text(source, encoding="utf-8")
+
+
 def build(cache, output):
     artifacts = fetch(cache)
     output.mkdir(parents=True, exist_ok=True)
@@ -65,15 +98,18 @@ def build(cache, output):
         root = work / "cascadeur MMD toolkit 1.0"
         manifest = json.loads((root / "MANIFEST-SHA256.json").read_text(encoding="utf-8-sig"))
         for entry in manifest["files"]:
-            assert digest(root / entry["source"]) == entry["sha256"]
+            if digest(root / entry["source"]) != entry["sha256"]:
+                raise ValueError("Upstream payload integrity failed: " + entry["source"])
         # Modern dialog source is copied byte-for-byte from the pinned v1.0
         # release. Only the legacy host loads the compatibility implementation.
         original_dialogs = root / "payload/resources/scripts/python/scripts/vmd_bridge/dialogs.py"
         shutil.copy2(original_dialogs, original_dialogs.with_name("_dialogs_modern.py"))
+        patch_import_bootstrap(original_dialogs.parent)
         for required in ("LGPL-3.0.txt", "GPL-3.0.txt", "COMPATIBILITY.txt"):
             if not (HERE / "overlay" / required).is_file():
                 raise FileNotFoundError("Missing release notice: " + required)
-        shutil.copytree(HERE / "overlay", root, dirs_exist_ok=True)
+        shutil.copytree(HERE / "overlay", root, dirs_exist_ok=True,
+                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo", ".DS_Store", "Thumbs.db"))
         payload = root / "payload"
         site = payload / "python/Lib/site-packages"
         for source, package, names in [(SOURCES[1][0], "PySide6", PYSIDE_FILES),
@@ -97,8 +133,8 @@ def build(cache, output):
             if path != native:
                 path.unlink()
         helper = pefile.PE(str(native))
-        assert helper.OPTIONAL_HEADER.AddressOfEntryPoint == 0
-        assert not hasattr(helper, "DIRECTORY_ENTRY_IMPORT")
+        if helper.OPTIONAL_HEADER.AddressOfEntryPoint != 0 or hasattr(helper, "DIRECTORY_ENTRY_IMPORT"):
+            raise ValueError("Reference helper must have no entry point or imported libraries")
 
         legacy_targets = {"python3.dll", REF_DLL}
         legacy_targets.update("python/Lib/site-packages/PySide6/" + n for n in PYSIDE_FILES)
@@ -113,7 +149,8 @@ def build(cache, output):
             if not target.endswith((".pyd", ".dll")):
                 continue
             pe = pefile.PE(str(payload / target))
-            assert pe.FILE_HEADER.Machine == 34404
+            if pe.FILE_HEADER.Machine != 34404:
+                raise ValueError("Legacy runtime must be Windows x64: " + target)
             for dependency in getattr(pe, "DIRECTORY_ENTRY_IMPORT", []):
                 name = dependency.dll.decode("ascii")
                 if name.startswith("Qt6"):
@@ -135,7 +172,7 @@ def build(cache, output):
             if requirement["path"] == "Qt6Gui.dll":
                 requirement["exports"] = [name for name in requirement["exports"]
                                           if "topLevelWindows@" not in name]
-        manifest["compatibility_revision"] = 1
+        manifest["compatibility_revision"] = 2
         manifest["files"] = []
         for path in sorted(payload.rglob("*")):
             if not path.is_file():
@@ -154,11 +191,11 @@ def build(cache, output):
             {"path": p.name, "sha256": digest(p), "size": p.stat().st_size}
             for p in sorted(root.iterdir()) if p.is_file() and p.name != "MANIFEST-SHA256.json"]
         (root / "MANIFEST-SHA256.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8-sig")
-        final = output / "cascadeur-MMD-toolkit-1.0-2026.1.3-compat.zip"
+        final = output / "cascadeur-MMD-toolkit-1.0-2026.1.3-compat-r2.zip"
         with zipfile.ZipFile(final, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
             for path in sorted(root.rglob("*")):
                 if path.is_file():
-                    info = zipfile.ZipInfo(path.relative_to(work).as_posix(), (2026, 10, 21, 0, 0, 0))
+                    info = zipfile.ZipInfo(path.relative_to(work).as_posix(), (2026, 10, 22, 0, 0, 0))
                     info.compress_type = zipfile.ZIP_DEFLATED
                     archive.writestr(info, path.read_bytes())
         (output / "SHA256SUMS.txt").write_text(digest(final) + "  " + final.name + "\n", encoding="ascii")

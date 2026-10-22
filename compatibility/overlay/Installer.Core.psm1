@@ -154,10 +154,55 @@ function Assert-ToolkitCapabilities([string]$Root, [object]$Requirements) {
 function Get-ToolkitHostVersion([string]$Path) {
     return [Diagnostics.FileVersionInfo]::GetVersionInfo($Path)
 }
+function Get-ToolkitHostRelease([string]$Root) {
+    $exe=Get-ToolkitSafePath $Root 'cascadeur.exe'
+    if (!(Test-Path -LiteralPath $exe -PathType Leaf)) { throw 'Missing host capability: cascadeur.exe' }
+    $info=Get-ToolkitHostVersion $exe
+    $match=[regex]::Match([string]$info.FileVersion, '^(\d{4})\.(\d+)\.(\d+)(?:\.|$)')
+    if (!$match.Success) { throw 'Cannot identify the Cascadeur release from cascadeur.exe VERSIONINFO.' }
+    return [version]($match.Groups[1].Value+'.'+$match.Groups[2].Value+'.'+$match.Groups[3].Value)
+}
+function Test-ToolkitCacheOnlyDirectory([string]$Root, [string]$Folder, [object[]]$Files) {
+    # Restore preserves unlisted generated files. Permit only empty directories
+    # and recognized CPython 3.11 cache names; never erase or accept foreign code.
+    $allowedDirectories=New-Object 'Collections.Generic.HashSet[string]' ([StringComparer]::Ordinal)
+    $patterns=New-Object 'Collections.Generic.List[string]'
+    foreach ($file in $Files) {
+        $local=$file.target.Substring($Folder.Length+1)
+        $separator=$local.LastIndexOf('/')
+        $parent=$(if($separator -ge 0){$local.Substring(0,$separator)}else{''})
+        if ($parent) { [void]$allowedDirectories.Add($parent) }
+        if ($local.EndsWith('.py',[StringComparison]::Ordinal)) {
+            $cache=$(if($parent){$parent+'/__pycache__'}else{'__pycache__'})
+            [void]$allowedDirectories.Add($cache)
+            $filename=$local.Substring($separator+1)
+            $stem=$filename.Substring(0,$filename.Length-3)
+            $patterns.Add('^'+[regex]::Escape($cache+'/'+$stem)+'\.cpython-311(?:\.opt-[12])?\.pyc$')
+        }
+    }
+    $directory=Get-ToolkitSafePath $Root $Folder
+    foreach ($item in Get-ChildItem -LiteralPath $directory -Recurse -Force) {
+        Assert-ToolkitNoReparse $item.FullName
+        $local=$item.FullName.Substring($directory.Length+1).Replace('\','/')
+        if ($item.PSIsContainer) {
+            if (!$allowedDirectories.Contains($local)) { return $false }
+        } else {
+            $known=$false
+            foreach ($pattern in $patterns) { if ($local -cmatch $pattern) { $known=$true; break } }
+            if (!$known) { return $false }
+        }
+    }
+    return $true
+}
 function Get-ToolkitHostProfile([string]$Root, [object]$Manifest) {
-    if (Test-Path -LiteralPath (Get-ToolkitSafePath $Root 'resources/scripts/python/python_actions_rule.py') -PathType Leaf) {
+    $hostRelease=Get-ToolkitHostRelease $Root
+    if ($hostRelease -lt [version]'2026.1.3') { throw 'Cascadeur 2026.1.3 or later is required.' }
+    if ($hostRelease -ge [version]'2026.2.0') {
         Assert-ToolkitCapabilities $Root $Manifest.requirements
         return 'native'
+    }
+    if (Test-Path -LiteralPath (Get-ToolkitSafePath $Root 'resources/scripts/python/python_actions_rule.py')) {
+        throw 'Cascadeur 2026.1 has mixed scripting rules. Use a clean host installation before installing the toolkit.'
     }
     Assert-ToolkitCapabilities $Root $Manifest.legacy_requirements
     foreach ($dll in @('Qt6Core.dll','Qt6Gui.dll','Qt6Network.dll','Qt6Qml.dll','Qt6Quick.dll')) {
@@ -174,7 +219,9 @@ function Get-ToolkitHostProfile([string]$Root, [object]$Manifest) {
         $directory = Get-ToolkitSafePath $Root $folder
         if (Test-Path -LiteralPath $directory) {
             if (!(Test-Path -LiteralPath $directory -PathType Container)) { throw "A file occupies runtime directory: $folder" }
-            foreach ($file in $Manifest.files | Where-Object { $_.profile -eq 'legacy' -and $_.target.StartsWith($folder+'/',[StringComparison]::Ordinal) }) {
+            $runtimeFiles=@($Manifest.files | Where-Object { $_.profile -eq 'legacy' -and $_.target.StartsWith($folder+'/',[StringComparison]::Ordinal) })
+            if (Test-ToolkitCacheOnlyDirectory $Root $folder $runtimeFiles) { continue }
+            foreach ($file in $runtimeFiles) {
                 $target = Get-ToolkitSafePath $Root $file.target
                 if (!(Test-Path -LiteralPath $target -PathType Leaf) -or (Get-ToolkitHash $target) -cne $file.sha256) {
                     throw "Existing or incomplete Python bindings conflict with the legacy runtime: $($file.target). Restore the previous toolkit installation first."
@@ -381,7 +428,7 @@ function Invoke-ToolkitInstall([string]$ReleaseRoot, [string]$CascadeurRoot, [st
                 $entries.Add([ordered]@{target=$relative; source=$null; action='remove_retired'; expected_sha256=$null; expected_size=0; existed=$true; before_sha256=(Get-ToolkitHash $target); before_size=(Get-Item -LiteralPath $target).Length; mutated=$false; restored=$false; verification=$null; rollback_verification=$null; observed_after_failure_sha256=$null})
             }
         }
-        $journal = [ordered]@{ schema=1; product=$script:Product; release=$script:Release; install_root=$root; release_root=$ReleaseRoot; started_utc=[DateTime]::UtcNow.ToString('o'); completed_utc=$null; status='preview'; host_profile=$hostProfile; error=$null; rollback_errors=@(); entries=$entries; created_directories=(New-Object 'Collections.Generic.List[string]') }
+        $journal = [ordered]@{ schema=1; product=$script:Product; release=$script:Release; install_root=$root; release_root=$ReleaseRoot; started_utc=[DateTime]::UtcNow.ToString('o'); completed_utc=$null; status='preview'; host_profile=$hostProfile; host_version=(Get-ToolkitHostRelease $root).ToString(); error=$null; rollback_errors=@(); entries=$entries; created_directories=(New-Object 'Collections.Generic.List[string]') }
         if ($Preview) { return $journal }
         $BackupDirectory = [IO.Path]::GetFullPath($BackupDirectory).TrimEnd('\')
         Assert-ToolkitNoReparse $BackupDirectory
