@@ -1,16 +1,16 @@
-# cascadeur MMD toolkit 1.0
+# cascadeur MMD toolkit 1.1
 
-![cascadeur MMD toolkit 1.0 release cover](docs/images/01-cover.png)
+![cascadeur MMD toolkit 1.1 release cover](docs/images/01-cover.png)
 
 面向 Cascadeur 的 MMD 骨骼动画工具集，支持 VMD 导入、VMD 导出和生成 Rig 清理。
 
 An MMD skeletal animation toolkit for Cascadeur, with VMD import, VMD export and generated-rig cleanup.
 
-**⚠️ 请先升级至 Cascadeur 2026.2 或更高版本。** 当前版本插件基于 Cascadeur 2026.2 及以上版本开发。低于此版本的软件（例如 **2026.1.3**）安装目录中缺少所需的 **PySide6** 组件，会导致安装脚本无法正常完成安装。请升级 Cascadeur 后再安装和使用插件。
+**兼容 Cascadeur 2026.1.3 与 2026.2（Windows x64）。** 安装器按宿主实际脚本接口选择路线。旧版所需的最小 Python/Qt 绑定已包含在安装包内，无需另装 Python、Blender、MMD 或桥接插件。
 
-**⚠️ Upgrade to Cascadeur 2026.2 or later before installing.** This plugin version was developed for Cascadeur 2026.2 and later. Older versions, such as **2026.1.3**, lack the required **PySide6** component in their installation directory, preventing the installer from completing successfully. Upgrade Cascadeur before installing and using the toolkit.
+**For Cascadeur 2026.1.3 and 2026.2 on Windows x64.** The installer selects the route using the host scripting interfaces. Required minimal legacy bindings are bundled; no separate Python, Blender, MMD or bridge plugin is needed.
 
-**[下载完整安装包 Download ZIP](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.0/cascadeur-MMD-toolkit-1.0.zip)** · **[中英使用教程 PDF User Guide](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.0/User-Guide.zh-en.pdf)** · [全部发布 Releases](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases)
+**[下载完整安装包 Download ZIP](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.1/cascadeur-MMD-toolkit-1.1.zip)** · **[中英使用教程 PDF User Guide](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.1/User-Guide.zh-en.pdf)** · [全部发布 Releases](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases)
 
 请下载上方安装包；GitHub 自动生成的 Source code 压缩包只包含此发布仓库的说明和文档，不是插件安装包。
 
@@ -24,7 +24,7 @@ Use the installation ZIP above. GitHub's automatic Source code archives contain 
 
 ## 安装 Install
 
-1. 完整解压下载的 ZIP。Extract the entire ZIP.
+1. **完整解压下载的 ZIP，再进入解压后的文件夹；不要在压缩包内直接双击 Install.cmd。** Extract the entire ZIP and open the extracted folder. Do not run Install.cmd from inside the archive.
 2. 关闭准备安装插件的 Cascadeur。Close the Cascadeur installation you intend to update.
 3. 双击 **Install.cmd**。Double-click **Install.cmd**.
 4. 粘贴直接包含 **cascadeur.exe** 的安装根目录并按 Enter，例如 `C:\Program Files\Cascadeur`。Paste the installation root containing **cascadeur.exe** and press Enter.
@@ -38,7 +38,7 @@ The console remains open after success, failure or cancellation. To restore prev
 
 - 导入：**File → Import → Import VMD**，选择模型，再选择 VMD。Import: choose the model, then the VMD.
 - 导出：**File → Export → Export VMD**，选择模型、可用的 FK/IK 策略及输出位置。Export: choose models, an available strategy and a destination.
-- 清理：**Scripts → cascadeur MMD toolkit → Scene Clean**。执行前保留工程副本，确认窗口中列出的目标范围。Keep a project copy and review the confirmation before cleaning.
+- 清理：**Scripts / Commands → cascadeur MMD toolkit → Scene Clean**。执行前保留工程副本，确认窗口中列出的目标范围。Keep a project copy and review the confirmation before cleaning.
 
 先准备好 MMD 模型、骨架和有效控制绑定，并打开具有已保存路径的 `.casc` 工程。此工具不会自动为任意网格制作人物 Rig。
 
@@ -49,6 +49,8 @@ Prepare the MMD model, skeleton and valid control bindings, then open a `.casc` 
 The import range starts at source VMD frame 0 without time stretching. Selecting target frames 100–160 imports source frames 0–60. With no selection, import starts at target frame 0. Export renumbers the selected clip from 0 and follows a 30 fps convention.
 
 ## 界面预览 Interface previews
+
+以下为插件界面示例，模型信息为示意数据。Interface examples below use illustrative model data.
 
 模型选择与绑定信息 / Model selection and binding details
 
@@ -64,9 +66,11 @@ Scene Clean执行前确认 / Confirmation before removing generated rigs
 
 ## 注意 Notes
 
-- 当前发布面向 Windows x64，并依赖 Cascadeur 提供的 CPython 3.11、Qt 6、PySide6、NumPy和相应脚本能力。安装器检查实际所需组件。This release targets Windows x64 and checks required host components and scripting capabilities.
+- 面向 Windows x64；安装器检查 CPython 3.11、Qt ABI、NumPy 和官方脚本能力，并在旧版安装随包最小绑定。This release checks the host capabilities and adds bundled minimal bindings on the legacy route.
+- 插件不会转换 Cascadeur 工程格式；旧版无法打开的新版场景仍需兼容版本保存的工程。The toolkit does not convert project formats. Use a project supported by your host version.
 - 主要范围为骨骼动画和必要 IK 状态；不导出表情、相机或灯光。Export covers skeletal animation and necessary IK states, not morphs, cameras or lights.
 - 不同模型的层级、比例、初始姿势和附加变换会影响动作效果。新模型先测试短片段，再检查手指、膝盖、脚踝及脚部接触。Model differences affect playback; test a short clip and inspect the result.
+- 若提示“已按场景骨架导出”，说明候选 PMX 未能完整匹配；请在原目标模型上检查重放，尤其是辅助骨和自定义约束。If export reports that the scene skeleton was used, the candidate PMX could not be fully matched. Check playback on the destination model, especially helper bones and custom constraints.
 - Scene Clean 会改变工程并移除生成控制器，不是每次导入/导出后的必做步骤。Scene Clean changes the project and is optional, not a routine post-export requirement.
 - 操作期间不要切换工程、改绑骨架或编辑动画。出现部分成功/部分动画提示时，按报告逐模型检查。Avoid scene edits during processing and inspect partial-result reports.
 
