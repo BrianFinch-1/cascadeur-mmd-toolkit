@@ -1,4 +1,8 @@
-# cascadeur MMD toolkit 1.11
+# cascadeur MMD toolkit
+
+**最新正式版 / Latest stable release: [查看最新版 v1.11 · Latest Release](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/latest)**
+
+**[下载 v1.11 安装包 / Download Installer ZIP](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.11/cascadeur-MMD-toolkit-1.11.zip)** · **[中英使用教程 / User Guide PDF](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.11/User-Guide.zh-en.pdf)** · [历史版本 / All releases](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases)
 
 ![cascadeur MMD toolkit 1.11 release cover](docs/images/01-cover.png)
 
@@ -9,8 +13,6 @@ An MMD skeletal animation toolkit for Cascadeur, with VMD import, VMD export and
 **兼容 Cascadeur 2026.1.3 与 2026.2（Windows x64）。** 安装器按宿主实际脚本接口选择路线。旧版所需的最小 Python/Qt 绑定已包含在安装包内，无需另装 Python、Blender、MMD 或桥接插件。
 
 **For Cascadeur 2026.1.3 and 2026.2 on Windows x64.** The installer selects the route using the host scripting interfaces. Required minimal legacy bindings are bundled; no separate Python, Blender, MMD or bridge plugin is needed.
-
-**[下载完整安装包 Download ZIP](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.11/cascadeur-MMD-toolkit-1.11.zip)** · **[中英使用教程 PDF User Guide](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.11/User-Guide.zh-en.pdf)** · [全部发布 Releases](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases)
 
 请下载上方安装包；GitHub 自动生成的 Source code 压缩包只包含此发布仓库的说明和文档，不是插件安装包。
 
