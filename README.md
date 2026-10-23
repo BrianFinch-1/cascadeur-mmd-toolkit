@@ -1,6 +1,6 @@
-# cascadeur MMD toolkit 1.1
+# cascadeur MMD toolkit 1.11
 
-![cascadeur MMD toolkit 1.1 release cover](docs/images/01-cover.png)
+![cascadeur MMD toolkit 1.11 release cover](docs/images/01-cover.png)
 
 面向 Cascadeur 的 MMD 骨骼动画工具集，支持 VMD 导入、VMD 导出和生成 Rig 清理。
 
@@ -10,7 +10,7 @@ An MMD skeletal animation toolkit for Cascadeur, with VMD import, VMD export and
 
 **For Cascadeur 2026.1.3 and 2026.2 on Windows x64.** The installer selects the route using the host scripting interfaces. Required minimal legacy bindings are bundled; no separate Python, Blender, MMD or bridge plugin is needed.
 
-**[下载完整安装包 Download ZIP](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.1/cascadeur-MMD-toolkit-1.1.zip)** · **[中英使用教程 PDF User Guide](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.1/User-Guide.zh-en.pdf)** · [全部发布 Releases](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases)
+**[下载完整安装包 Download ZIP](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.11/cascadeur-MMD-toolkit-1.11.zip)** · **[中英使用教程 PDF User Guide](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.11/User-Guide.zh-en.pdf)** · [全部发布 Releases](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases)
 
 请下载上方安装包；GitHub 自动生成的 Source code 压缩包只包含此发布仓库的说明和文档，不是插件安装包。
 
@@ -21,6 +21,16 @@ Use the installation ZIP above. GitHub's automatic Source code archives contain 
 - **Import VMD**：选择已识别的 MMD 人物或受支持道具，将 VMD 骨骼动作写入时间轴。一次选择多个模型时，它们共用同一份 VMD。Import skeletal motion into detected characters or supported props. Multiple models selected together share the same VMD.
 - **Export VMD**：从场景实际骨骼运动导出，人物可根据骨架条件选择 FK 或 IK；多模型分别输出。Export evaluated skeletal animation, with FK/IK choices where supported and separate files for multiple models.
 - **Scene Clean**：在当前帧复位检测模型的控制器，再移除生成 Rig，保留网格、骨架和 Armature。Reset controls at the current frame and remove generated rigs while retaining meshes, skeletons and armatures.
+
+## 1.11 更新 Changes
+
+保留导入时间轴原有 IK/FK 与固定状态；修复旧宿主可选接口缺失导致的导入失败，以及导入后验证额外触发求解、改变姿态并报告失败的问题。升级后请重新启动 Cascadeur，必要时在原工程副本重新导入。
+
+Import preserves existing timeline IK/FK and fixation settings. This update fixes missing optional APIs on legacy hosts and an extra solve during verification that could alter baked poses and report failure. Restart Cascadeur after updating; re-import into an original project copy when needed.
+
+已测试版本包括 2026.1.3 与 2026.2 系列；这不是版本白名单。安装与运行检查实际 API、所需符号和 ABI，必要能力不足会报告具体原因。
+
+Tested versions include 2026.1.3 and the 2026.2 series; these are not a version allowlist. Installation and runtime check actual APIs, required symbols and ABI, with specific errors for missing requirements.
 
 ## 安装 Install
 
@@ -65,6 +75,8 @@ Scene Clean执行前确认 / Confirmation before removing generated rigs
 ![Scene Clean confirmation](docs/images/04-scene-clean.png)
 
 ## 注意 Notes
+
+- 人物精度导入可能补全或重建生成控制图；首次迁移旧Rig要求场景中只有该角色，并从目标第0帧替换全部已有动画。叠加动画、原生循环和混入无关对象的共享层不支持。请先用工程副本，具体限制见教程。Precise character import may rebuild the generated graph; initial migration requires an isolated character and replacement of all existing animation from frame 0. Additive stacks, native cycles and layers shared with unrelated objects are unsupported. Use a project copy and read the guide.
 
 - 面向 Windows x64；安装器检查 CPython 3.11、Qt ABI、NumPy 和官方脚本能力，并在旧版安装随包最小绑定。This release checks the host capabilities and adds bundled minimal bindings on the legacy route.
 - 插件不会转换 Cascadeur 工程格式；旧版无法打开的新版场景仍需兼容版本保存的工程。The toolkit does not convert project formats. Use a project supported by your host version.

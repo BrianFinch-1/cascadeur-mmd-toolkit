@@ -1,4 +1,4 @@
-﻿cascadeur MMD toolkit 1.1 - Third-party notices
+﻿cascadeur MMD toolkit 1.11 - Third-party notices
 
 This distribution includes python-zstandard 0.23.0 (BSD license).
 The complete license is reproduced below and also included with the dependency.
