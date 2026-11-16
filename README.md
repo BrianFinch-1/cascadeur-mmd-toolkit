@@ -1,10 +1,10 @@
 # cascadeur MMD toolkit
 
-**最新正式版 / Latest stable release: [查看最新版 v1.12 · Latest Release](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/latest)**
+**最新正式版 / Latest stable release: [查看最新版 v1.2 · Latest Release](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/latest)**
 
-**[下载 v1.12 安装包 / Download Installer ZIP](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.12/cascadeur-MMD-toolkit-1.12.zip)** · **[中英使用教程 / User Guide PDF](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.12/User-Guide.zh-en.pdf)** · [历史版本 / All releases](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases)
+**[下载 v1.2 安装包 / Download Installer ZIP](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.2/cascadeur-MMD-toolkit-1.2.zip)** · **[中英使用教程 / User Guide PDF](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases/download/v1.2/User-Guide.zh-en.pdf)** · [历史版本 / All releases](https://github.com/BrianFinch-1/cascadeur-mmd-toolkit/releases)
 
-![cascadeur MMD toolkit 1.12 release cover](docs/images/01-cover.png)
+![cascadeur MMD toolkit 1.2 release cover](docs/images/01-cover.png)
 
 面向 Cascadeur 的 MMD 骨骼动画工具集，支持 VMD 导入、VMD 导出和生成 Rig 清理。
 
@@ -24,7 +24,21 @@ Use the installation ZIP above. GitHub's automatic Source code archives contain 
 - **Export VMD**：从场景实际骨骼运动导出，人物可根据骨架条件选择 FK 或 IK；多模型分别输出。Export evaluated skeletal animation, with FK/IK choices where supported and separate files for multiple models.
 - **Scene Clean**：在当前帧复位检测模型的控制器，再移除生成 Rig，保留网格、骨架和 Armature。Reset controls at the current frame and remove generated rigs while retaining meshes, skeletons and armatures.
 
-## 1.12 更新 Changes
+## 1.2 更新 Changes
+
+人物 VMD 导入沿用已有 Rig 和控制器绑定，并保留选区外动画。人物骨骼导入和导出覆盖身体、必要变形辅助骨与眼球。
+
+Character VMD import keeps the existing rig and controller bindings and preserves animation outside the selected range. Character skeletal import and export cover the body, required deformation helpers and eyeballs.
+
+改善多角色和道具的处理。道具导入遇到未完成写入时会报告具体结果。
+
+Improves multi-character and prop handling. Prop import reports when a write does not complete.
+
+FK 导出保留独立承担蒙皮权重的普通脚尖，并为单侧腿模型写入已有脚部 IK 的关闭状态。导出入口和保存框的定位与关闭行为也已修复。
+
+FK export preserves ordinary toe bones with independent skin weights and writes disabled foot IK states for single-sided rigs. This release also fixes where the export command appears and how the save dialog closes.
+
+### 1.12
 
 修复旧 Rig 首次迁移时要求从第 0 帧覆盖全部已有动画的问题。可从所选目标帧段导入，短片段导入保留后续原动画，重复分段及原动画尾部之后的导入也受支持。
 
@@ -59,6 +73,10 @@ The console remains open after success, failure or cancellation. To restore prev
 
 ## 使用 Use
 
+随安装包提供 Quick Rigging Tool 绑定预设和七张参考图，使用步骤见双语教程。
+
+The installer ZIP includes the Quick Rigging Tool preset and seven reference images. Follow the bilingual guide for setup.
+
 - 导入：**File → Import → Import VMD**，选择模型，再选择 VMD。Import: choose the model, then the VMD.
 - 导出：**File → Export → Export VMD**，选择模型、可用的 FK/IK 策略及输出位置。Export: choose models, an available strategy and a destination.
 - 清理：**Scripts / Commands → cascadeur MMD toolkit → Scene Clean**。执行前保留工程副本，确认窗口中列出的目标范围。Keep a project copy and review the confirmation before cleaning.
@@ -89,7 +107,8 @@ Scene Clean执行前确认 / Confirmation before removing generated rigs
 
 ## 注意 Notes
 
-- 人物精度导入可能补全或重建生成控制图；首次迁移旧 Rig 仍要求场景中只有该角色，但不再要求从第 0 帧覆盖全部旧动画。已有完整独立图支持相应模型作用域。叠加动画、原生循环及混入无关对象的共享层仍不支持。 Precise character import may complete or rebuild the generated graph. Initial migration still requires an isolated character, but no longer requires replacing all old animation from frame 0. Complete independent graphs support the corresponding model scope. Additive stacks, native cycles and layers shared with unrelated objects remain unsupported.
+- 人物导入沿用已有 Cascadeur Rig 和控制器绑定。导入选区外保留原有关键帧、姿态和 FK/Free 等标记。建议在工程副本中检查选区边界。叠加动画、原生循环和混入无关对象的共享层有兼容限制。 Character import keeps the existing Cascadeur rig and controller bindings. Existing keys, poses and markers such as FK/Free outside the import range are preserved. Check the selection boundaries in a project copy. Additive animation, native cycles and layers shared with unrelated objects have compatibility limits.
+- 人物导入和导出处理身体、必要变形辅助骨与眼球。头发、衣饰等独立次要运动不在人物处理范围内。导入保留工程中已有的这些次要轨道。道具使用独立的骨骼处理方式。 Character import and export cover the body, required deformation helpers and eyeballs. Independent secondary motion such as hair and clothing is outside the character scope. Import preserves those existing project tracks. Props use their own skeletal processing.
 
 - 面向 Windows x64；安装器检查 CPython 3.11、Qt ABI、NumPy 和官方脚本能力，并在旧版安装随包最小绑定。This release checks the host capabilities and adds bundled minimal bindings on the legacy route.
 - 插件不会转换 Cascadeur 工程格式；旧版无法打开的新版场景仍需兼容版本保存的工程。The toolkit does not convert project formats. Use a project supported by your host version.
